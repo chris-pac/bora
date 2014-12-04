@@ -20,6 +20,25 @@ from google.appengine.ext import ndb
 import cgi
 import urllib
 
+QUESTIONCREATE_PAGE_HTML = """\
+<html>
+  <body>
+    <form action="/question" method="post">
+      <div><p>What is your question?</p></div>
+      <div><textarea autofocus required name=content rows=20 cols=80></textarea></div>
+       <div><input type="submit" value="Create"></div>
+    </form>
+  </body>
+</html>
+"""
+
+
+QUESTIONDISPLAY_HTML = """\
+<div style="width:500px;border-style:ridge;padding: 5">
+<p>%s</p>
+<a href="/view?question=%s">View</a>
+</div>
+"""
 
 MAIN_PAGE_FOOTER_TEMPLATE = """\
     <p>Hello %s</p>
@@ -33,8 +52,8 @@ class Vote(ndb.Model):
     updown = ndb.IntegerProperty(required=True)
     
 class Question(ndb.Model):
-    author = ndb.UserProperty()
-    content = ndb.TextProperty()
+    author = ndb.UserProperty(required=True)
+    content = ndb.TextProperty(required=True)
     createdate = ndb.DateTimeProperty(auto_now_add=True)
     modifydate = ndb.DateTimeProperty(auto_now=True)
     tags = ndb.StringProperty(repeated=True)
@@ -57,8 +76,54 @@ class MainHandler(webapp2.RequestHandler):
             url = users.create_login_url(self.request.uri)
             url_linktext = 'Login'
         
+        questions_query = Question.query().order(-Question.modifydate)
+        
+        questions = questions_query.fetch(10)
+        
+        for question in questions:
+            self.response.write(QUESTIONDISPLAY_HTML % (question.content, question.key.urlsafe()))
+        
+        
+        
+        
+        self.response.write('<div><a href=/question>Add Question</a></div>')
+        
         self.response.write(MAIN_PAGE_FOOTER_TEMPLATE % (nickname, url, url_linktext))
 
+class QuestionView(webapp2.RequestHandler):
+    def get(self):
+        self.response.write('<html><body>')
+        question_link = self.request.get('question')
+        question_key = ndb.Key(urlsafe=question_link)
+        
+        question = question_key.get()
+        
+        self.response.write('<p>%s</p>' % question.content)
+                
+        self.response.write('</body></html>')
+
+
+class QuestionHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.write(QUESTIONCREATE_PAGE_HTML)
+        
+    def post(self):
+        user = users.get_current_user()
+        
+        if user:
+            question = Question()
+            question.author = users.get_current_user()
+            question.content = self.request.get('content')
+            
+            question.put()
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
+            
+        self.redirect('/')    
+                
+        
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/question', QuestionHandler),
+    ('/view', QuestionView)
 ], debug=True)
