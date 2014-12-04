@@ -28,6 +28,21 @@ MAIN_PAGE_FOOTER_TEMPLATE = """\
 </html>
 """
 
+class Vote(ndb.Model):
+    username = ndb.UserProperty(required=True)
+    updown = ndb.IntegerProperty(required=True)
+    
+class Question(ndb.Model):
+    author = ndb.UserProperty()
+    content = ndb.TextProperty()
+    createdate = ndb.DateTimeProperty(auto_now_add=True)
+    modifydate = ndb.DateTimeProperty(auto_now=True)
+    tags = ndb.StringProperty(repeated=True)
+    shortcontent = ndb.ComputedProperty(lambda self: self.content[:500])
+    votes = ndb.StructuredProperty(Vote, repeated=True)
+    score = ndb.IntegerProperty()
+
+
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
