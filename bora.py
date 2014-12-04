@@ -20,9 +20,29 @@ from google.appengine.ext import ndb
 import cgi
 import urllib
 
+
+MAIN_PAGE_FOOTER_TEMPLATE = """\
+    <p>Hello %s</p>
+    <a href="%s">%s</a>
+  </body>
+</html>
+"""
+
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        self.response.write('Hello world!')
+        user = users.get_current_user()
+        self.response.write('<html><body>')
+        nickname = "Guest"
+        
+        if user:
+            url = users.create_logout_url(self.request.uri)
+            url_linktext = 'Logout'
+            nickname = user.nickname()
+        else:
+            url = users.create_login_url(self.request.uri)
+            url_linktext = 'Login'
+        
+        self.response.write(MAIN_PAGE_FOOTER_TEMPLATE % (nickname, url, url_linktext))
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler)
