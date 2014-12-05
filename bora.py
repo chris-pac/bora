@@ -204,11 +204,12 @@ class VoteHandler(webapp2.RequestHandler):
             if myentity:
                 founduser = False   
                 for vote in myentity.votes:
-                    self.response.write(vote)
+                    #self.response.write(vote)
                     if vote.author == user:
                         founduser = True
                         myentity.score = myentity.score - vote.updown
                         vote.updown = vote1
+                        break
 
                 myentity.score = myentity.score + vote1
                 if not founduser:
@@ -217,7 +218,7 @@ class VoteHandler(webapp2.RequestHandler):
         else:
             self.redirect(users.create_login_url(self.request.uri))
         
-        #self.redirect('/view?question=' + question_link)
+        self.redirect(self.request.referer)
         
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
