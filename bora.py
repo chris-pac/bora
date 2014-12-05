@@ -54,7 +54,17 @@ QUESTIONDISPLAY_VOTE_HTML = """\
 <div style="clear:both"></div>
 <hr style="border-style:solid">
 """
-
+ANSWERDISPLAY_VOTE_HTML = """\
+<div>
+    <p style="float:left">%s</p>
+    <p style="float:right">%s
+        <a href=/vote?id=%s&value=up><input type=button value='Up'></input></a>
+        <a href=/vote?id=%s&value=down><input type=button value='Down'></input></a>
+    </p>
+</div>
+<div style="clear:both"></div>
+<hr style="border-style:dashed">
+"""
 QUESTIONDISPLAY_VOTE_FOOTER_HTML = """\
 <div>
     <form action=/answer method=post>
@@ -75,7 +85,7 @@ MAIN_PAGE_FOOTER_TEMPLATE = """\
 """
 
 class Vote(ndb.Model):
-    username = ndb.UserProperty(required=True)
+    author = ndb.UserProperty(required=True)
     updown = ndb.IntegerProperty(required=True)
     
 class Question(ndb.Model):
@@ -133,6 +143,12 @@ class QuestionView(webapp2.RequestHandler):
         
         self.response.write(QUESTIONDISPLAY_VOTE_HTML % (question.content, question.score, question.key.urlsafe(), question.key.urlsafe()))
         
+        answers_query = Answer.query(ancestor=question.key)
+        answers = answers_query.fetch(10)
+        for answer in answers:
+            self.response.write(ANSWERDISPLAY_VOTE_HTML % (answer.content, answer.score, answer.key.urlsafe(), answer.key.urlsafe()))
+            
+        
         self.response.write(QUESTIONDISPLAY_VOTE_FOOTER_HTML % question.key.urlsafe())
 
 
@@ -168,11 +184,45 @@ class AnswerHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
         
         self.redirect('/view?question=' + question_link)
-                     
+
+class VoteHandler(webapp2.RequestHandler):
+    def get(self):
+        myentity_link = self.request.get('id')
+        updown = self.request.get('value')
+        vote1 = -1
+                
+        if updown == 'up':
+            vote1 = 1
+        
+        self.response.write(vote1)
+        
+        user = users.get_current_user()
+        
+        if user:
+            myentity_key = ndb.Key(urlsafe=myentity_link)
+            myentity = myentity_key.get()
+            if myentity:
+                founduser = False   
+                for vote in myentity.votes:
+                    self.response.write(vote)
+                    if vote.author == user:
+                        founduser = True
+                        myentity.score = myentity.score - vote.updown
+                        vote.updown = vote1
+
+                myentity.score = myentity.score + vote1
+                if not founduser:
+                    myentity.votes.append(Vote(author=user, updown=vote1))
+                myentity.put()
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
+        
+        #self.redirect('/view?question=' + question_link)
         
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/question', QuestionHandler),
     ('/view', QuestionView),
-    ('/answer', AnswerHandler)
+    ('/answer', AnswerHandler),
+    ('/vote', VoteHandler)
 ], debug=True)
