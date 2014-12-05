@@ -40,6 +40,33 @@ QUESTIONDISPLAY_HTML = """\
 </div>
 """
 
+QUESTIONDISPLAY_VOTE_HTML = """\
+<html><body>
+<a href=/>Back to Questions</a><br></br>
+<div style="width:500px;border-style:ridge;padding: 5">
+<div>
+    <p style="float:left"><b>%s</b></p>
+    <p style="float:right">%s
+        <a href=/vote?id=%s&value=up><input type=button value='Up'></input></a>
+        <a href=/vote?id=%s&value=down><input type=button value='Down'></input></a>
+    </p>
+</div>
+<div style="clear:both"></div>
+<hr style="border-style:solid">
+"""
+
+QUESTIONDISPLAY_VOTE_FOOTER_HTML = """\
+<div>
+    <form action=/answer method=post>
+        <p>What is your answer?</p>
+        <textarea required name=content rows=20 cols=68></textarea>
+        <input type=submit value=Submit></input>
+        <input type=hidden name=question value=%s></input>
+    </form>
+</div>
+</div></body></html>
+"""
+
 MAIN_PAGE_FOOTER_TEMPLATE = """\
     <p>Hello %s</p>
     <a href="%s">%s</a>
@@ -59,7 +86,15 @@ class Question(ndb.Model):
     tags = ndb.StringProperty(repeated=True)
     shortcontent = ndb.ComputedProperty(lambda self: self.content[:500])
     votes = ndb.StructuredProperty(Vote, repeated=True)
-    score = ndb.IntegerProperty()
+    score = ndb.IntegerProperty(default=0)
+
+class Answer(ndb.Model):
+    author = ndb.UserProperty(required=True)
+    content = ndb.TextProperty(required=True)
+    createdate = ndb.DateTimeProperty(auto_now_add=True)
+    modifydate = ndb.DateTimeProperty(auto_now=True)
+    votes = ndb.StructuredProperty(Vote, repeated=True)
+    score = ndb.IntegerProperty(default=0)    
 
 
 class MainHandler(webapp2.RequestHandler):
@@ -81,9 +116,7 @@ class MainHandler(webapp2.RequestHandler):
         questions = questions_query.fetch(10)
         
         for question in questions:
-            self.response.write(QUESTIONDISPLAY_HTML % (question.content, question.key.urlsafe()))
-        
-        
+            self.response.write(QUESTIONDISPLAY_HTML % (question.shortcontent, question.key.urlsafe()))        
         
         
         self.response.write('<div><a href=/question>Add Question</a></div>')
@@ -92,15 +125,15 @@ class MainHandler(webapp2.RequestHandler):
 
 class QuestionView(webapp2.RequestHandler):
     def get(self):
-        self.response.write('<html><body>')
         question_link = self.request.get('question')
         question_key = ndb.Key(urlsafe=question_link)
         
         question = question_key.get()
         
-        self.response.write('<p>%s</p>' % question.content)
-                
-        self.response.write('</body></html>')
+        
+        self.response.write(QUESTIONDISPLAY_VOTE_HTML % (question.content, question.score, question.key.urlsafe(), question.key.urlsafe()))
+        
+        self.response.write(QUESTIONDISPLAY_VOTE_FOOTER_HTML % question.key.urlsafe())
 
 
 class QuestionHandler(webapp2.RequestHandler):
@@ -120,10 +153,26 @@ class QuestionHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
             
         self.redirect('/')    
-                
+
+class AnswerHandler(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        question_link = self.request.get('question')
+        
+        if user:
+            answer = Answer(parent=ndb.Key(urlsafe=question_link))
+            answer.author = users.get_current_user()
+            answer.content = self.request.get('content')
+            answer.put()
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
+        
+        self.redirect('/view?question=' + question_link)
+                     
         
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/question', QuestionHandler),
-    ('/view', QuestionView)
+    ('/view', QuestionView),
+    ('/answer', AnswerHandler)
 ], debug=True)
