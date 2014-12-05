@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+    <body>
+        {% if user_ok %}
+        <div><a href=/question>Add Question</a></div>
+        {% endif %}
+        
+        {% for question in questions %}
+        <div style="width:500px;border-style:ridge;padding: 5">
+            <p>{{ question.shortcontent }}</p>
+            <a href="/view/{{ question.key.urlsafe() }}">View</a>
+        </div>
+        {% endfor %}
+
+        <p>Hello {{ user_nickname }}</p>
+        <a href="{{ user_url }}">{{ user_url_linktext }}</a>
+    </body>
+</html>
