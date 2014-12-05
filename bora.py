@@ -89,7 +89,7 @@ class MainHandler(webapp2.RequestHandler):
             'more_url': more_url
         }
 
-        template = JINJA_ENVIRONMENT.get_template('main.html')
+        template = JINJA_ENVIRONMENT.get_template('templates/main.html')
         self.response.write(template.render(template_values))
 
 class QuestionView(webapp2.RequestHandler):
