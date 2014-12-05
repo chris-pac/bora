@@ -8,6 +8,7 @@
 import webapp2
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from google.appengine.datastore.datastore_query import Cursor
 import cgi
 import os
 import urllib
@@ -44,11 +45,28 @@ class Answer(ndb.Model):
 # [END models]
 
 class MainHandler(webapp2.RequestHandler):
+    def post(self):
+        self.handlePostGet('post')
     def get(self):
+        self.handlePostGet()    
+    
+    def handlePostGet(self, methodtype='get'):    
         user = users.get_current_user()
+        curs = Cursor(urlsafe=self.request.get('next'))
+        
         questions_query = Question.query().order(-Question.modifydate)
-        questions = questions_query.fetch(10)
+        questions, next_curs, more = questions_query.fetch_page(1, start_cursor=curs)
 
+        more_home = False
+        more_url =''
+        if not next_curs:
+            more = False
+        if more:
+            more_url = next_curs.urlsafe()
+        elif methodtype =='post':
+            more_home = True
+            more_url = '/'
+        
         if user:
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'Logout'
@@ -65,7 +83,10 @@ class MainHandler(webapp2.RequestHandler):
             'user_ok': user_ok,
             'user_nickname': nickname,
             'user_url': url,
-            'user_url_linktext': url_linktext
+            'user_url_linktext': url_linktext,
+            'more': more,
+            'more_home': more_home,
+            'more_url': more_url
         }
 
         template = JINJA_ENVIRONMENT.get_template('main.html')

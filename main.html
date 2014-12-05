@@ -12,6 +12,15 @@
         </div>
         {% endfor %}
 
+        {% if more %}
+        <form action=/ method=POST>
+        <input type=submit value="Next Page"></input>
+        <input type=hidden name=next value={{ more_url }}></input>
+        </form>
+        {% elif more_home %}
+         <a href={{ more_url }}><input type=button value="Home"></input></a>
+        {% endif %}
+
         <p>Hello {{ user_nickname }}</p>
         <a href="{{ user_url }}">{{ user_url_linktext }}</a>
     </body>
