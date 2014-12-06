@@ -51,7 +51,13 @@ class Answer(ndb.Model):
     createdate = ndb.DateTimeProperty(auto_now_add=True)
     modifydate = ndb.DateTimeProperty(auto_now=True)
     votes = ndb.StructuredProperty(Vote, repeated=True)
-    score = ndb.IntegerProperty(default=0)    
+    score = ndb.IntegerProperty(default=0)   
+    
+class Picture(ndb.Model):
+    author = ndb.UserProperty(required=True)
+    createdate = ndb.DateTimeProperty(auto_now_add=True)
+    title = ndb.StringProperty()
+    image = ndb.BlobProperty(required=True, indexed=False)    
 # [END models]
 
 class MainHandler(webapp2.RequestHandler):
@@ -277,6 +283,13 @@ class VoteHandler(webapp2.RequestHandler):
         
         self.redirect(self.request.referer)
             
+class PictureHandler(webapp2.RequestHandler):
+    def serveImage(self, picture_link):
+        self.response.write(picture_link)
+        
+    def savePicture(self):
+        self.response.write('saving')
+        
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/tag/<tag>', handler=MainHandler),
     webapp2.Route(r'/', handler=MainHandler, defaults={'tag': ''}),
@@ -286,6 +299,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/answer/<action:(create|modify)>/<entity_link>', handler=AnswerHandler),
     webapp2.Route(r'/answer/<action:(create|modify)>', handler=AnswerHandler, defaults={'entity_link': ''}),
     webapp2.Route(r'/rss/<question_link>', handler=QuestionView, handler_method='rssFeed'),
-    webapp2.Route(r'/vote/<updown:(up|down)>/<entity_link>', handler=VoteHandler)
+    webapp2.Route(r'/vote/<updown:(up|down)>/<entity_link>', handler=VoteHandler),
+    webapp2.Route('/image/upload', handler=PictureHandler, handler_method='savePicture'),
+    webapp2.Route('/image/<picture_link>', handler=PictureHandler, handler_method='serveImage')
 ], debug=True)
 
