@@ -55,7 +55,7 @@ class MainHandler(webapp2.RequestHandler):
         curs = Cursor(urlsafe=self.request.get('next'))
         
         questions_query = Question.query().order(-Question.modifydate)
-        questions, next_curs, more = questions_query.fetch_page(1, start_cursor=curs)
+        questions, next_curs, more = questions_query.fetch_page(10, start_cursor=curs)
 
         more_home = False
         more_url =''
@@ -105,59 +105,112 @@ class QuestionView(webapp2.RequestHandler):
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'Logout'
             nickname = user.nickname()
-            user_ok = True
         else:
             url = users.create_login_url(self.request.uri)
             url_linktext = 'Login'
             nickname = 'Guest'
-            user_ok = False
         
         template_values = {
             'question': question,
             'answers': answers,
-            'user_ok': user_ok,
+            'user': user,
             'user_nickname': nickname,
             'user_url': url,
             'user_url_linktext': url_linktext
         }
         
-        template = JINJA_ENVIRONMENT.get_template('questionView.html')
+        template = JINJA_ENVIRONMENT.get_template('templates/questionView.html')
         self.response.write(template.render(template_values))
 
 
 class QuestionHandler(webapp2.RequestHandler):
-    def get(self):
-        template = JINJA_ENVIRONMENT.get_template('questionCreate.html')
-        self.response.write(template.render())
+    def get(self, action, entity_link):
+        if action == 'create':
+            self.showCreate()
+        elif action == 'modify':
+            self.showModify(entity_link)
         
-    def post(self):
-        user = users.get_current_user()
-        
-        if user:
-            question = Question()
-            question.author = users.get_current_user()
-            question.content = self.request.get('content')
-            
-            question.put()
-        else:
-            self.redirect(users.create_login_url(self.request.uri))
-            
-        self.redirect('/')    
+    def showCreate(self):
+        template_values = {
+            'action': '/question/create',
+            'action_name': 'Create',
+            'heading': 'What is your question?',
+            'content': ''
+        }
+        template = JINJA_ENVIRONMENT.get_template('templates/baseInput.html')
+        self.response.write(template.render(template_values))
 
-class AnswerHandler(webapp2.RequestHandler):
-    def post(self):
+    def showModify(self, entity_link):
         user = users.get_current_user()
-        question_link = self.request.get('question')
+        myentity = ndb.Key(urlsafe=entity_link).get()        
+
+        if user and myentity and myentity.author == user:
+            template_values = {
+                'action': '/question/modify/' + entity_link,
+                'action_name': 'Modify',
+                'heading': 'Make changes',
+                'content': myentity.content,
+                'back_link': '/view/' + entity_link
+            }
+            template = JINJA_ENVIRONMENT.get_template('templates/baseInput.html')
+            self.response.write(template.render(template_values))
         
-        if user:
-            answer = Answer(parent=ndb.Key(urlsafe=question_link))
-            answer.author = users.get_current_user()
-            answer.content = self.request.get('content')
-            answer.put()
-        else:
+    def post(self, action, entity_link):
+        user = users.get_current_user()
+        
+        if not user:
             self.redirect(users.create_login_url(self.request.uri))
         
-        self.redirect('/view/' + question_link)
+        if action == 'create':
+            question = Question()
+            question.author = user
+            question.content = self.request.get('content')
+            question.put()
+        if action == 'modify':
+            question = ndb.Key(urlsafe=entity_link).get()
+            if question and question.author == user: 
+                question.content = self.request.get('content')
+                question.put()
+           
+        self.redirect('/')    
+        
+class AnswerHandler(webapp2.RequestHandler):
+    def get(self, action, entity_link):
+        user = users.get_current_user()
+        myentity_key = ndb.Key(urlsafe=entity_link)
+        myentity = myentity_key.get()       
+
+        if user and myentity and myentity.author == user:
+            template_values = {
+                'action': '/answer/modify/' + entity_link,
+                'action_name': 'Modify',
+                'heading': 'Make changes',
+                'content': myentity.content,
+                'back_link': '/view/' + myentity_key.parent().urlsafe()
+            }
+            template = JINJA_ENVIRONMENT.get_template('templates/baseInput.html')
+            self.response.write(template.render(template_values))
+
+    def post(self, action, entity_link):
+        user = users.get_current_user()
+        
+        if user:
+            if action == 'create':
+                question_link = self.request.get('question')
+                answer = Answer(parent=ndb.Key(urlsafe=question_link))
+                answer.author = user
+                answer.content = self.request.get('content')
+                answer.put()
+                self.redirect('/view/' + question_link)
+            elif action == 'modify':
+                answer_key = ndb.Key(urlsafe=entity_link)
+                answer = answer_key.get()
+                if answer and answer.author == user: 
+                    answer.content = self.request.get('content')
+                    answer.put()
+                    self.redirect('/view/' + answer_key.parent().urlsafe())
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
 
 class VoteHandler(webapp2.RequestHandler):
     def get(self, updown, entity_link):
@@ -193,9 +246,11 @@ class VoteHandler(webapp2.RequestHandler):
         
 app = webapp2.WSGIApplication([
     webapp2.Route('/', handler=MainHandler),
-    webapp2.Route('/question', handler=QuestionHandler),
+    webapp2.Route(r'/question/<action:(create|modify)>/<entity_link>', handler=QuestionHandler),
+    webapp2.Route(r'/question/<action:(create|modify)>', handler=QuestionHandler, defaults={'entity_link': ''}),
     webapp2.Route('/view/<question_link>', handler=QuestionView),
-    webapp2.Route('/answer', handler=AnswerHandler),
+    webapp2.Route(r'/answer/<action:(create|modify)>/<entity_link>', handler=AnswerHandler),
+    webapp2.Route(r'/answer/<action:(create|modify)>', handler=AnswerHandler, defaults={'entity_link': ''}),
     webapp2.Route(r'/vote/<updown:(up|down)>/<entity_link>', handler=VoteHandler)
 ], debug=True)
 

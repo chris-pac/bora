@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+    </head>
+    <body>
+        <form action="{{ action }}" method=post>
+            <p>{{ heading }}</p>
+            <textarea autofocus required name=content rows=20 cols=80>{{ content }}</textarea>
+            <br />
+            <input type="submit" value="{{ action_name }}">
+            <a href={{ back_link|default("/") }}><input type=button value='Back'</input></a>
+        </form>
+    </body>
+</html>

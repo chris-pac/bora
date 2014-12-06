@@ -5,13 +5,20 @@
     </head>
     <body>
         {% if user_ok %}
-        <div><a href=/question>Add Question</a></div>
+        <div><a href=/question/create>Add Question</a></div>
         {% endif %}
         
         {% for question in questions %}
         <div style="width:500px;border-style:ridge;padding: 5">
             <p>{{ question.shortcontent }}</p>
             <a href="/view/{{ question.key.urlsafe() }}">View</a>
+            <div>
+                <p>{{ question.author.nickname() }}</p>
+                <time>{{ question.createdate }}</time>
+                {% if question.createdate != question.modifydate %}
+                <time>{{ question.modifydate }}</time>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
 
