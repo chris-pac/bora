@@ -7,3 +7,10 @@ body {
 {
     margin-left: 5px;
 }
+
+.question-tags
+{
+    font-size: 12px;
+    font-family: 'Open Sans', "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #999;
+}

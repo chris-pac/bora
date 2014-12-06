@@ -45,17 +45,24 @@ class Answer(ndb.Model):
 # [END models]
 
 class MainHandler(webapp2.RequestHandler):
-    def post(self):
+    def post(self, tag):
+        print 'TAG p IS' + tag
         self.handlePostGet('post')
-    def get(self):
-        self.handlePostGet()    
+    def get(self, tag):
+        print 'TAG g IS' + tag
+        self.handlePostGet('get', tag)    
     
-    def handlePostGet(self, methodtype='get'):    
+    def handlePostGet(self, methodtype='get', tag=''):    
         user = users.get_current_user()
         curs = Cursor(urlsafe=self.request.get('next'))
         
         questions_query = Question.query().order(-Question.modifydate)
-        questions, next_curs, more = questions_query.fetch_page(10, start_cursor=curs)
+        print self.request
+        
+        if tag:
+            #questions_query = questions_query.filter(Question.tags == tag)
+            print 'tagging' + tag
+        questions, next_curs, more = questions_query.fetch_page(1, start_cursor=curs)
 
         more_home = False
         more_url =''
@@ -137,7 +144,7 @@ class QuestionHandler(webapp2.RequestHandler):
             'heading': 'What is your question?',
             'content': ''
         }
-        template = JINJA_ENVIRONMENT.get_template('templates/baseInput.html')
+        template = JINJA_ENVIRONMENT.get_template('templates/questionInput.html')
         self.response.write(template.render(template_values))
 
     def showModify(self, entity_link):
@@ -150,9 +157,10 @@ class QuestionHandler(webapp2.RequestHandler):
                 'action_name': 'Modify',
                 'heading': 'Make changes',
                 'content': myentity.content,
-                'back_link': '/view/' + entity_link
+                'back_link': '/view/' + entity_link,
+                'tags': ', '.join(myentity.tags)
             }
-            template = JINJA_ENVIRONMENT.get_template('templates/baseInput.html')
+            template = JINJA_ENVIRONMENT.get_template('templates/questionInput.html')
             self.response.write(template.render(template_values))
         
     def post(self, action, entity_link):
@@ -165,11 +173,13 @@ class QuestionHandler(webapp2.RequestHandler):
             question = Question()
             question.author = user
             question.content = self.request.get('content')
+            question.tags = self.request.get('tags').split(',')
             question.put()
         if action == 'modify':
             question = ndb.Key(urlsafe=entity_link).get()
             if question and question.author == user: 
                 question.content = self.request.get('content')
+                question.tags = self.request.get('tags').split(',')
                 question.put()
            
         self.redirect('/')    
@@ -245,7 +255,8 @@ class VoteHandler(webapp2.RequestHandler):
         self.redirect(self.request.referer)
         
 app = webapp2.WSGIApplication([
-    webapp2.Route('/', handler=MainHandler),
+    webapp2.Route(r'/#<tag>', handler=MainHandler),
+    webapp2.Route(r'/', handler=MainHandler, defaults={'tag': ''}),
     webapp2.Route(r'/question/<action:(create|modify)>/<entity_link>', handler=QuestionHandler),
     webapp2.Route(r'/question/<action:(create|modify)>', handler=QuestionHandler, defaults={'entity_link': ''}),
     webapp2.Route('/view/<question_link>', handler=QuestionView),

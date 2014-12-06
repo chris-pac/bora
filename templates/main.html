@@ -18,6 +18,12 @@
                 {% if question.createdate != question.modifydate %}
                 <time>{{ question.modifydate }}</time>
                 {% endif %}
+                
+                <span class="question-tags">Tagged With:
+                    {% for tag in question.tags %}
+                    <a href="/foo#{{ tag }}">{{ tag }}</a>
+                    {% endfor %}
+                </span>
             </div>
         </div>
         {% endfor %}
