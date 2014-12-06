@@ -13,12 +13,22 @@ import cgi
 import os
 import urllib
 import jinja2
+import time
+from email.Utils import formatdate
+# [END imports]
 
+# [START jinja]
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
-# [END imports]
+
+def format_datetime(value, type='rss'):
+    return formatdate(time.mktime(value.timetuple()))
+
+JINJA_ENVIRONMENT.filters['datetime'] = format_datetime
+# [END jinja]
+
 
 # [START models]
 class Vote(ndb.Model):
@@ -96,13 +106,30 @@ class MainHandler(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
 class QuestionView(webapp2.RequestHandler):
+    def rssFeed(self, question_link):
+        question_key = ndb.Key(urlsafe=question_link)
+        
+        question = question_key.get()
+        answers_query = Answer.query(ancestor=question.key).order(-Answer.score)
+        answers = answers_query.fetch(300)
+        
+        template_values = {
+            'question': question,
+            'answers': answers,
+            'host_url': self.request.host_url
+        }
+        
+        template = JINJA_ENVIRONMENT.get_template('templates/rssQuestion.html')
+        self.response.write(template.render(template_values))
+
+        
     def get(self, question_link):
         user = users.get_current_user()
         question_key = ndb.Key(urlsafe=question_link)
         
         question = question_key.get()
-        answers_query = Answer.query(ancestor=question.key)
-        answers = answers_query.fetch(10)
+        answers_query = Answer.query(ancestor=question.key).order(-Answer.score)
+        answers = answers_query.fetch(300)
         
         if user:
             url = users.create_logout_url(self.request.uri)
@@ -249,7 +276,7 @@ class VoteHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
         
         self.redirect(self.request.referer)
-        
+            
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/tag/<tag>', handler=MainHandler),
     webapp2.Route(r'/', handler=MainHandler, defaults={'tag': ''}),
@@ -258,6 +285,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/view/<question_link>', handler=QuestionView),
     webapp2.Route(r'/answer/<action:(create|modify)>/<entity_link>', handler=AnswerHandler),
     webapp2.Route(r'/answer/<action:(create|modify)>', handler=AnswerHandler, defaults={'entity_link': ''}),
+    webapp2.Route(r'/rss/<question_link>', handler=QuestionView, handler_method='rssFeed'),
     webapp2.Route(r'/vote/<updown:(up|down)>/<entity_link>', handler=VoteHandler)
 ], debug=True)
 

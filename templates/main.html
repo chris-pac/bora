@@ -10,7 +10,7 @@
         
         {% for question in questions %}
         <div style="width:500px;border-style:ridge;padding: 5">
-            <p>{{ question.shortcontent }}</p>
+            <p>{{ question.content|truncate(500) }}</p>
             <a href="/view/{{ question.key.urlsafe() }}">View</a>
             <div>
                 <p>{{ question.author.nickname() }}</p>
@@ -19,7 +19,8 @@
                 <time>{{ question.modifydate }}</time>
                 {% endif %}
                 
-                <span class="question-tags">Tagged With:
+                <span class="question-tags">
+                    <a href="/rss/{{ question.key.urlsafe() }}" class="feed"></a> Tagged With:
                     {% for tag in question.tags %}
                     <a href="/tag/{{ tag }}">{{ tag }}</a>
                     {% endfor %}

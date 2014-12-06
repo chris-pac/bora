@@ -1,0 +1,16 @@
+<rss version="2.0">
+    <channel>
+        <title>{{ question.content|truncate(30)|title }}</title>
+        <link>{{ host_url }}/view/{{ question.key.urlsafe() }}</link>
+        <description>{{ question.content }}</description>
+        <language>en-us</language>
+        <lastBuildDate>{{ question.modifydate|datetime }}</lastBuildDate>
+        {% for answer in answers %}
+        <item>
+            <title>{{ answer.content|truncate(30)|title }}</title>
+            <link>{{ host_url }}/view/{{ question.key.urlsafe() }}</link>
+            <description>{{ answer.content }}</description>
+        </item>
+        {% endfor %}
+    </channel>
+</rss>
