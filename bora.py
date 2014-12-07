@@ -345,10 +345,12 @@ class VoteHandler(webapp2.RequestHandler):
             
 class PictureHandler(webapp2.RequestHandler):
     def serveImage(self, picture_link):
-        
-        self.response.write(picture_link)
         pic_key = ndb.Key(urlsafe=picture_link)
 
+        if not pic_key:
+            self.error(404)
+            return
+        
         pic = pic_key.get()
         
         if pic and pic.imagedata:
