@@ -57,7 +57,8 @@ class Picture(ndb.Model):
     author = ndb.UserProperty(required=True)
     createdate = ndb.DateTimeProperty(auto_now_add=True)
     title = ndb.StringProperty()
-    image = ndb.BlobProperty(required=True, indexed=False)    
+    imagedata = ndb.BlobProperty(required=True, indexed=False)
+    image_name = ndb.StringProperty(required=True)
 # [END models]
 
 class MainHandler(webapp2.RequestHandler):
@@ -197,7 +198,16 @@ class QuestionHandler(webapp2.RequestHandler):
         
         if not user:
             self.redirect(users.create_login_url(self.request.uri))
+            return
         
+        submitAction = self.request.get('submitButton')
+        
+        if submitAction == 'Upload':
+            pic_link = self.handlePictureUpload(user)
+            if pic_link:
+                self.reloadPageOnPictureUpload(action, entity_link, pic_link)
+            return
+                
         if action == 'create':
             question = Question()
             question.author = user
@@ -211,7 +221,57 @@ class QuestionHandler(webapp2.RequestHandler):
                 question.tags = [tag.strip() for tag in self.request.get('tags').split(',')]
                 question.put()
            
-        self.redirect('/')    
+        self.redirect('/')
+        
+    def handlePictureUpload(self, user):
+        file_upload = self.request.POST.get('img', None)
+        '''
+        #FieldStorage
+        print "b"
+        print file_upload
+        
+        if file_upload == None:
+            print 'none'
+        print 'a'
+        return
+        '''
+        try:
+            pic = Picture()
+            pic.author = user
+            pic.title = self.request.get('pic_title')
+            file_name = file_upload.filename
+            pic.imagedata = file_upload.file.read()
+            pic.image_name = file_name    
+            pic.put()
+            return pic.key.urlsafe()
+        except:
+            pass
+            
+    def reloadPageOnPictureUpload(self, action, entity_link, pic_link):
+        # this whole picture upload needs to be replaced with a postback (ajax or jquery)
+        
+        img_link = ' ' + self.request.host_url + '/image/' + pic_link + '#image'
+        
+        if action == 'create':
+            template_values = {
+                'action': '/question/create',
+                'action_name': 'Create',
+                'heading': 'What is your question?',
+                'content': self.request.get('content') + img_link,
+                'tags': self.request.get('tags')
+            }            
+        elif action == 'modify':
+            template_values = {
+                'action': '/question/modify/' + entity_link,
+                'action_name': 'Modify',
+                'heading': 'Make changes',
+                'content': self.request.get('content') + img_link,
+                'back_link': '/view/' + entity_link,
+                'tags': self.request.get('tags')
+            }
+        
+        template = JINJA_ENVIRONMENT.get_template('templates/questionInput.html')
+        self.response.write(template.render(template_values))            
         
 class AnswerHandler(webapp2.RequestHandler):
     def get(self, action, entity_link):

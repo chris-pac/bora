@@ -3,3 +3,9 @@
 <p>Add comma-separated tags</p>
 <textarea name=tags rows=1 cols=80>{{ tags }}</textarea>
 {% endblock %}
+{% block picture %}
+<br />
+<input type="file" name="img" accept="image/*">
+<input type="submit" name="submitButton" value="Upload">
+Title: <input type="text" name="pic_title"></input>
+{% endblock %}
