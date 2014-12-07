@@ -10,7 +10,7 @@
             {% if question %}
             
             <div>
-                <p style="float:left"><b>{{ question.content }}</b></p>
+                <p style="float:left"><b>{{ question.content|urlize_ext }}</b></p>
                 <p style="float:right">{{ question.score }}
                 {% if user %}
                 <a href=/vote/up/{{ question.key.urlsafe() }}><input type=button value='Up'></input></a>
