@@ -10,7 +10,7 @@
         
         {% for question in questions %}
         <div style="width:500px;border-style:ridge;padding: 5">
-            <p>{{ question.content|truncate(500) }}</p>
+            <p>{{ question.content|truncate(500)|urlize_ext }}</p>
             <a href="/view/{{ question.key.urlsafe() }}">View</a>
             <div>
                 <p>{{ question.author.nickname() }}</p>

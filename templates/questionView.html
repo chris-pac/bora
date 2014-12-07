@@ -36,7 +36,7 @@
 
             {% for answer in answers %}
             <div>
-                <p style="float:left">{{ answer.content }}</p>
+                <p style="float:left">{{ answer.content|urlize_ext }}</p>
                 <p style="float:right">{{ answer.score }}
                 {% if user %}
                 <a href=/vote/up/{{ answer.key.urlsafe() }}><input type=button value='Up'></input></a>
