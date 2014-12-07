@@ -9,11 +9,12 @@ import webapp2
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.datastore.datastore_query import Cursor
-import cgi
+#import cgi
 import os
-import urllib
+#import urllib
 import jinja2
 import time
+import mimetypes
 from email.Utils import formatdate
 # [END imports]
 
@@ -58,7 +59,7 @@ class Picture(ndb.Model):
     createdate = ndb.DateTimeProperty(auto_now_add=True)
     title = ndb.StringProperty()
     imagedata = ndb.BlobProperty(required=True, indexed=False)
-    image_name = ndb.StringProperty(required=True)
+    filename = ndb.StringProperty(required=True)
 # [END models]
 
 class MainHandler(webapp2.RequestHandler):
@@ -239,9 +240,8 @@ class QuestionHandler(webapp2.RequestHandler):
             pic = Picture()
             pic.author = user
             pic.title = self.request.get('pic_title')
-            file_name = file_upload.filename
             pic.imagedata = file_upload.file.read()
-            pic.image_name = file_name    
+            pic.filename = file_upload.filename    
             pic.put()
             return pic.key.urlsafe()
         except:
@@ -345,10 +345,18 @@ class VoteHandler(webapp2.RequestHandler):
             
 class PictureHandler(webapp2.RequestHandler):
     def serveImage(self, picture_link):
-        self.response.write(picture_link)
         
-    def savePicture(self):
-        self.response.write('saving')
+        self.response.write(picture_link)
+        pic_key = ndb.Key(urlsafe=picture_link)
+
+        pic = pic_key.get()
+        
+        if pic and pic.imagedata:
+            self.response.headers['Content-Type'] = mimetypes.guess_type(pic.filename)[0]
+            self.response.out.write(pic.imagedata)
+        else:
+            self.error(404)
+            
         
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/tag/<tag>', handler=MainHandler),
@@ -360,7 +368,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/answer/<action:(create|modify)>', handler=AnswerHandler, defaults={'entity_link': ''}),
     webapp2.Route(r'/rss/<question_link>', handler=QuestionView, handler_method='rssFeed'),
     webapp2.Route(r'/vote/<updown:(up|down)>/<entity_link>', handler=VoteHandler),
-    webapp2.Route('/image/upload', handler=PictureHandler, handler_method='savePicture'),
     webapp2.Route('/image/<picture_link>', handler=PictureHandler, handler_method='serveImage')
 ], debug=True)
 
