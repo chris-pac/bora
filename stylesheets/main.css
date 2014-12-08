@@ -1,7 +1,9 @@
 body {
     font-family: Verdana, Helvetica, sans-serif;
     background-color: whitesmoke;
+    text-align: justify;
 }
+html, body { margin: 0; padding: 0; }
 
 .button-style
 {
@@ -20,3 +22,43 @@ body {
     padding: 0 0 0 19px;
     background: url("/images/feed-icon-14x14.png") no-repeat 0 50%;
 }
+
+#hold {
+    margin-right: auto;
+    margin-left: auto;
+    width: 800px;
+}
+
+#main-wrapper {
+    margin: auto;
+    /*width: 600px;*/
+}
+
+#content-outer {
+    background: url('http://4.bp.blogspot.com/-1mmZoa2TfWE/UQHUSBXTLFI/AAAAAAAAAfU/lkWSAG1mZXo/s000/gradient%25252520blue%252525202.png') repeat-x #fff;
+    box-shadow: 0 0 3px #999;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    padding: 5px;
+}
+
+p.content {
+    text-shadow:5px 5px 10px #606060;
+}
+
+.jump-link {
+    float: right;
+    padding-top: 5px;
+}
+#create-time {
+    float: left;
+}
+
+#modify-time {
+    float: right;
+}
+
+img {
+
+}
+

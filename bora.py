@@ -133,7 +133,10 @@ def do_urlize_ext(text, trim_url_limit=None, nofollow=False, target=None):
         return u''.join(words)
 
 def format_datetime(value, type='rss'):
-    return formatdate(time.mktime(value.timetuple()))
+    if type =='rss':
+        return formatdate(time.mktime(value.timetuple()))
+    elif type =='loc':
+        return value.strftime('%a, %d %b %y %I:%M %p')
 
 JINJA_ENVIRONMENT.filters['datetime'] = format_datetime
 JINJA_ENVIRONMENT.filters['urlize_ext'] = do_urlize_ext
@@ -172,6 +175,7 @@ class Picture(ndb.Model):
 # [END models]
 
 class MainHandler(webapp2.RequestHandler):
+    MAX_QUESTIONS_PER_PAGE = 5
     def post(self, tag):
         self.handlePostGet('post')
     def get(self, tag):
@@ -185,7 +189,7 @@ class MainHandler(webapp2.RequestHandler):
         
         if tag:
             questions_query = questions_query.filter(Question.tags == tag)
-        questions, next_curs, more = questions_query.fetch_page(10, start_cursor=curs)
+        questions, next_curs, more = questions_query.fetch_page(self.MAX_QUESTIONS_PER_PAGE, start_cursor=curs)
 
         more_home = False
         more_url =''
