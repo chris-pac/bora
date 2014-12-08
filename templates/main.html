@@ -3,7 +3,7 @@
     <head>
         <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
     </head>
-    <body>        
+    <body>
         <div id="hold">
             <div id="header">
                 <h1>Bora</h1>
@@ -26,7 +26,7 @@
             </div> <!-- end header -->
             <div id="main-wrapper">
                 {% for question in questions %}
-                <div id="content-outer">
+                <div class="content-outer" id="content-outer-main">
                     <div id="content-inner">
                         <p class="content">{{ question.content|truncate(500)|urlize_ext }}</p>
                         <div>
@@ -56,7 +56,7 @@
                 </div> <!-- content-outer -->
                 <div style="clear: both;"></div>
                 {% endfor %}
-            </div> <!-- end man-wrapper -->
+            </div> <!-- end main-wrapper -->
             <div id="more">
                 {% if more %}
                 <form action=/ method=POST>
