@@ -2,7 +2,8 @@ body {
     font-family: Verdana, Helvetica, sans-serif;
     background-color: whitesmoke;
     text-align: justify;
-    background-image: url("/images/Elegant_Background-18.jpg");
+    /*background-image: url("/images/Elegant_Background-18.jpg");*/
+    /*background-image: url("/images/red_paper_background.jpg");*/
     background-attachment: fixed;
     /*background-image: url("/images/Elegant_Background-13.jpg");
     background-repeat: repeat-x
@@ -31,6 +32,14 @@ html, body { margin: 0; padding: 0; }
 }
 h1 {
     text-shadow:5px 5px 10px blue;
+}
+
+.time {
+    font-size: 14px;
+}
+
+time {
+    font-style: italic;
 }
 
 #nav {
@@ -122,3 +131,12 @@ img {
 #modify-control {
     float: right;
 }
+
+textarea
+{
+    background: mintcream;
+    -webkit-border-radius: 5px; //For Safari, etc.
+    -moz-border-radius: 5px; //For Mozilla, etc.
+    border-radius: 5px; //CSS3 Feature
+}
+

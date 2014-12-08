@@ -33,11 +33,13 @@
                             <span>{{ question.author.nickname() }}</span>
                             <div class="time">
                                 <div id="create-time">
-                                    <time>Created On: {{ question.createdate|datetime('loc') }}</time>
+                                    <span>Created On: </span>
+                                    <time>{{ question.createdate|datetime('loc') }}</time>
                                 </div>
                                 <div id="modify-time">
                                     {% if question.createdate|datetime('loc') != question.modifydate|datetime('loc') %}
-                                    <time>Last Modified: {{ question.modifydate|datetime('loc') }}</time>
+                                    <span>Last Modified: </span>
+                                    <time>{{ question.modifydate|datetime('loc') }}</time>
                                     {% endif %}
                                 </div>
                                 <div style="clear: both;"></div>
