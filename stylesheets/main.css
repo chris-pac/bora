@@ -2,6 +2,11 @@ body {
     font-family: Verdana, Helvetica, sans-serif;
     background-color: whitesmoke;
     text-align: justify;
+    /*background-image: url("/images/Elegant_Background-13.jpg");
+    background-repeat: repeat-x
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-attachment: fixed;*/
 }
 html, body { margin: 0; padding: 0; }
 
@@ -22,6 +27,28 @@ html, body { margin: 0; padding: 0; }
     padding: 0 0 0 19px;
     background: url("/images/feed-icon-14x14.png") no-repeat 0 50%;
 }
+h1 {
+    text-shadow:5px 5px 10px blue;
+}
+
+#nav {
+    
+}
+
+ul {
+    list-style-type: none;
+}
+li {
+    border-radius: 10px;
+    color: #F7113A;
+    display: inline;
+    font-size: 14px;
+    padding: 10px;
+    margin-right: 25px;
+    text-align: center;
+    box-shadow: 0 0 3px #999;
+    background: #AFC6E9;
+}
 
 #hold {
     margin-right: auto;
@@ -34,8 +61,16 @@ html, body { margin: 0; padding: 0; }
     /*width: 600px;*/
 }
 
+#header {
+    display: table;
+    margin: 0 auto;
+    text-align: center;
+    /*background-image: url("/images/North_Wind.png");
+    padding-bottom: 150px;*/
+}
+
 #content-outer {
-    background: url('http://4.bp.blogspot.com/-1mmZoa2TfWE/UQHUSBXTLFI/AAAAAAAAAfU/lkWSAG1mZXo/s000/gradient%25252520blue%252525202.png') repeat-x #fff;
+    background: url('/images/gradientblue.png') repeat-x #fff;
     box-shadow: 0 0 3px #999;
     border-radius: 20px;
     margin-bottom: 30px;
