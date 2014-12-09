@@ -2,7 +2,7 @@ body {
     font-family: Verdana, Helvetica, sans-serif;
     background-color: whitesmoke;
     text-align: justify;
-    /*background-image: url("/images/Elegant_Background-18.jpg");*/
+    background-image: url("/images/storm.png");
     /*background-image: url("/images/red_paper_background.jpg");*/
     background-attachment: fixed;
     /*background-image: url("/images/Elegant_Background-13.jpg");
@@ -10,6 +10,7 @@ body {
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-attachment: fixed;*/
+    word-wrap: break-word;
 }
 html, body { margin: 0; padding: 0; }
 
@@ -97,6 +98,7 @@ li {
 
 p.content {
     text-shadow:5px 5px 10px #606060;
+    overflow: auto;
 }
 
 .jump-link {
@@ -112,7 +114,8 @@ p.content {
 }
 
 img {
-
+    /*width: 100%;*/
+    /*overflow: auto;*/
 }
 
 
@@ -120,8 +123,18 @@ img {
     padding-top: 5px;
 }
 
-#vote-score {
+#vote-score-pos {
     float: left;
+    margin-right: 10px;
+    font-weight: bold;
+    color: blue;
+}
+
+#vote-score-neg {
+    float: left;
+    margin-right: 10px;
+    font-weight: bold;
+    color: red;
 }
 
 #vote-control {
