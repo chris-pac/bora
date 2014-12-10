@@ -5,14 +5,39 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     </head>
     <body>
-        <form action="{{ action }}" enctype="multipart/form-data" method=post>
-            <p>{{ heading }}</p>
-            <textarea autofocus required name=content rows=20 cols=80>{{ content }}</textarea>
-            {% block tags %}{% endblock %}
-            {% block picture %}{% endblock %}
-            <br />
-            <input type="submit" name="submitButton" value="{{ action_name }}">
-            <a href={{ back_link|default("/") }}><input type=button value='Back'</input></a>
-        </form>
+        <div id="hold">
+            <div id="header">
+                <h1>Bora</h1>
+                <div id="nav">
+                    <ul>
+                        <li>
+                            <a href=/>Home</a>
+                        </li>
+                    </ul>
+                </div>
+            </div> <!-- end header -->
+            <div id="main-wrapper">
+                
+                <div class="content-outer" id="content-outer-view">
+                    <div id="content-inner">
+        
+        
+                        <form action="{{ action }}" enctype="multipart/form-data" method=post>
+                            <p>{{ heading }}</p>
+                            <textarea autofocus required name=content rows=20 cols=108>{{ content }}</textarea>
+                            {% block tags %}{% endblock %}
+                            {% block picture %}{% endblock %}
+                            <br />
+                            <input type="submit" name="submitButton" value="{{ action_name }}">
+                            <a href={{ back_link|default("/") }}><input type=button value='Back'</input></a>
+                        </form>
+        
+                    </div> <!-- content-inner -->
+                </div> <!-- content-outer -->
+                <div style="clear: both;"></div>
+            </div> <!-- end main-wrapper -->
+        </div> <!-- end hold -->
+        
+        
     </body>
 </html>

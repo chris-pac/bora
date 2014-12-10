@@ -4,41 +4,71 @@
         <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
     </head>
     <body>
-        {% if user_ok %}
-        <div><a href=/question/create>Add Question</a></div>
-        {% endif %}
-        
-        {% for question in questions %}
-        <div style="width:500px;border-style:ridge;padding: 5">
-            <p>{{ question.content|truncate(500)|urlize_ext }}</p>
-            <a href="/view/{{ question.key.urlsafe() }}">View</a>
-            <div>
-                <p>{{ question.author.nickname() }}</p>
-                <time>{{ question.createdate }}</time>
-                {% if question.createdate != question.modifydate %}
-                <time>{{ question.modifydate }}</time>
+        <div id="hold">
+            <div id="header">
+                <h1>Bora</h1>
+                <h3>Hello {{ user_nickname }}</h3>
+                <div id="nav">
+                    <ul>
+                        <li>
+                            <a href=/>Home</a>
+                        </li>
+                        <li>
+                            <a href="{{ user_url }}">{{ user_url_linktext }}</a>
+                        </li>
+                        {% if user_ok %}
+                        <li>
+                            <a href=/question/create>Post</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div> <!-- end header -->
+            <div id="main-wrapper">
+                {% for question in questions %}
+                <div class="content-outer" id="content-outer-main">
+                    <div id="content-inner">
+                        <p class="content">{{ question.content|truncate(500)|urlize_ext }}</p>
+                        <div>
+                            <span>{{ question.author.nickname() }}</span>
+                            <div class="time">
+                                <div id="create-time">
+                                    <span>Created On: </span>
+                                    <time>{{ question.createdate|datetime('loc') }}</time>
+                                </div>
+                                <div id="modify-time">
+                                    {% if question.createdate|datetime('loc') != question.modifydate|datetime('loc') %}
+                                    <span>Last Modified: </span>
+                                    <time>{{ question.modifydate|datetime('loc') }}</time>
+                                    {% endif %}
+                                </div>
+                                <div style="clear: both;"></div>
+                            </div> <!-- end time -->
+                            <span class="question-tags">
+                                <a href="/rss/{{ question.key.urlsafe() }}" class="feed"></a> Tagged With:
+                                {% for tag in question.tags %}
+                                <a href="/tag/{{ tag }}">{{ tag }}</a>
+                                {% endfor %}
+                            </span>
+                        </div>
+                    </div> <!-- content-inner -->
+                    <div class="jump-link">
+                        <a href="/view/{{ question.key.urlsafe() }}">Read more »</a>
+                    </div>
+                </div> <!-- content-outer -->
+                <div style="clear: both;"></div>
+                {% endfor %}
+            </div> <!-- end main-wrapper -->
+            <div id="more">
+                {% if more %}
+                <form action=/ method=POST>
+                    <input type=submit value="Next Page"></input>
+                    <input type=hidden name=next value={{ more_url }}></input>
+                </form>
+                {% elif more_home %}
+                <a href={{ more_url }}><input type=button value="Home"></input></a>
                 {% endif %}
-                
-                <span class="question-tags">
-                    <a href="/rss/{{ question.key.urlsafe() }}" class="feed"></a> Tagged With:
-                    {% for tag in question.tags %}
-                    <a href="/tag/{{ tag }}">{{ tag }}</a>
-                    {% endfor %}
-                </span>
-            </div>
-        </div>
-        {% endfor %}
-
-        {% if more %}
-        <form action=/ method=POST>
-        <input type=submit value="Next Page"></input>
-        <input type=hidden name=next value={{ more_url }}></input>
-        </form>
-        {% elif more_home %}
-         <a href={{ more_url }}><input type=button value="Home"></input></a>
-        {% endif %}
-
-        <p>Hello {{ user_nickname }}</p>
-        <a href="{{ user_url }}">{{ user_url_linktext }}</a>
+            </div> <!-- end more -->
+        </div> <!-- end hold -->
     </body>
 </html>

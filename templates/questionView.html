@@ -1,82 +1,133 @@
 <!DOCTYPE html>
+
+{% macro votescore(score) -%}
+{% if score >= 0 %}
+    "vote-score-pos"
+{% else %}
+    "vote-score-neg"
+{% endif %}
+{%- endmacro %}
+
 <html lang="en">
     <head>
         <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
     </head>
     <body>
-        <a href=/>Back to Questions</a><br></br>
-        
-        <div style="width:500px;border-style:ridge;padding: 5">
+        <div id="hold">
+            <div id="header">
+                <h1>Bora</h1>
+                <h3>Hello {{ user_nickname }}</h3>
+                <div id="nav">
+                    <ul>
+                        <li>
+                            <a href=/>Home</a>
+                        </li>
+                        <li>
+                            <a href="{{ user_url }}">{{ user_url_linktext }}</a>
+                        </li>
+                    </ul>
+                </div>
+            </div> <!-- end header -->
+            <div id="main-wrapper">
             {% if question %}
-            
-            <div>
-                <p style="float:left"><b>{{ question.content|urlize_ext }}</b></p>
-                <p style="float:right">{{ question.score }}
-                {% if user %}
-                <a href=/vote/up/{{ question.key.urlsafe() }}><input type=button value='Up'></input></a>
-                <a href=/vote/down/{{ question.key.urlsafe() }}><input type=button value='Down'></input></a>
-                {% endif %}
-                <div style="float:right">
-                    <p>{{ question.author.nickname() }}</p>
-                    <time>{{ question.createdate }}</time>
-                    {% if question.createdate == question.modifydate %}
-                    <time>{{ question.modifydate }}</time>
-                    {% endif %}
-                </div>
+                <div class="content-outer" id="content-outer-view">
+                    <div id="content-inner">
+                        <p class="content">{{ question.content|urlize_ext }}</p>
+                        <div>
+                            <span>{{ question.author.nickname() }}</span>
+                            <div class="time">
+                                <div id="create-time">
+                                    <span>Created On: </span>
+                                    <time>{{ question.createdate|datetime('loc') }}</time>
+                                </div>
+                                <div id="modify-time">
+                                    {% if question.createdate|datetime('loc') != question.modifydate|datetime('loc') %}
+                                    <span>Last Modified: </span>
+                                    <time>{{ question.modifydate|datetime('loc') }}</time>
+                                    {% endif %}
+                                </div>
+                                <div style="clear: both;"></div>
+                            </div> <!-- end time -->
+                            <span class="question-tags">
+                                <a href="/rss/{{ question.key.urlsafe() }}" class="feed"></a> Tagged With:
+                                {% for tag in question.tags %}
+                                <a href="/tag/{{ tag }}">{{ tag }}</a>
+                                {% endfor %}
+                            </span>
+                        </div>
+                    </div> <!-- content-inner -->
+                    <div>
+                        <div class="item-control" id={{ votescore(question.score) }}>{{ question.score }}</div>
+                        <div class="item-control" id="vote-control">
+                            {% if user %}
+                            <a href=/vote/up/{{ question.key.urlsafe() }}><input type=button value='Up'></input></a>
+                            <a href=/vote/down/{{ question.key.urlsafe() }}><input type=button value='Down'></input></a>
+                            {% endif %}
+                        </div> <!-- vote-control -->
+                        <div class="item-control" id="modify-control">
+                            {% if question.author == user %}
+                            <a href=/question/modify/{{ question.key.urlsafe() }}><input type=button value='Modify'></input></a>
+                            {% endif %}
+                        </div> <!-- modify-control -->
+                    </div> <!-- item-control -->
+                </div> <!-- content-outer -->
+                <div style="clear: both;"></div>
                 
-                {% if question.author == user %}
-                <div>
-                    <a href=/question/modify/{{ question.key.urlsafe() }}><input type=button value='Modify'></input></a>
-                </div>
-                {% endif %}
-                </p>
-            </div>
-            <div style="clear:both"></div>
-            <hr style="border-style:solid">
+                <div class="content-outer">
+                    <div id="content-inner">
+                        {% if user %}
+                            <form style="margin: 5px 5px;" action=/answer/create method=post>
+                                <textarea required name=content rows=10 cols=108></textarea>
+                                <span>Enter Your Answer</span>
+                                <input style="float: right;" type=submit value=Submit></input>
+                                <input type=hidden name=question value={{ question.key.urlsafe() }}></input>
+                            </form>
+                        {% endif %}
+                    </div> <!-- content-inner -->
+                </div> <!-- content-outer -->
+                <div style="clear: both;"></div>
 
-            {% for answer in answers %}
-            <div>
-                <p style="float:left">{{ answer.content|urlize_ext }}</p>
-                <p style="float:right">{{ answer.score }}
-                {% if user %}
-                <a href=/vote/up/{{ answer.key.urlsafe() }}><input type=button value='Up'></input></a>
-                <a href=/vote/down/{{ answer.key.urlsafe() }}><input type=button value='Down'></input></a>
-                {% endif %}
-                <div style="float:right">
-                    <p>{{ answer.author.nickname() }}</p>
-                    <time>{{ answer.createdate }}</time>
-                    {% if answer.createdate == question.modifydate %}
-                    <time>{{ answer.modifydate }}</time>
-                    {% endif %}
-                </div>
-                
-                {% if answer.author == user %}
-                <div>
-                    <a href=/answer/modify/{{ answer.key.urlsafe() }}><input type=button value='Modify'></input></a>
-                </div>
-                {% endif %}
-                </p>
-            </div>
-            <div style="clear:both"></div>
-            <hr style="border-style:dashed">
-            {% endfor %}
-            
-            {% if user %}
-            <div>
-                <form action=/answer/create method=post>
-                    <p>What is your answer?</p>
-                    <textarea required name=content rows=20 cols=68></textarea>
-                    <input type=submit value=Submit></input>
-                    <input type=hidden name=question value={{ question.key.urlsafe() }}></input>
-                </form>
-            </div>
-            {% endif %}
-            
-            {% endif %}
-        </div>
-        
-        <p>Hello {{ user_nickname }}</p>
-        <a href="{{ user_url }}">{{ user_url_linktext }}</a>
 
+                {% for answer in answers %}
+                <div class="content-outer" id="content-outer-view">
+                    <div id="content-inner">
+                        <p class="content">{{ answer.content|urlize_ext }}</p>
+                        <div>
+                            <span>{{ answer.author.nickname() }}</span>
+                            <div class="time">
+                                <div id="create-time">
+                                    <span>Created On: </span>
+                                    <time>{{ answer.createdate|datetime('loc') }}</time>
+                                </div>
+                                <div id="modify-time">
+                                    {% if answer.createdate|datetime('loc') != answer.modifydate|datetime('loc') %}
+                                    <span>Last Modified: </span>
+                                    <time>{{ answer.modifydate|datetime('loc') }}</time>
+                                    {% endif %}
+                                </div>
+                                <div style="clear: both;"></div>
+                            </div> <!-- end time -->
+                        </div>
+                    </div> <!-- content-inner -->
+                    <div>
+                        <div class="item-control" id={{ votescore(answer.score) }}>{{ answer.score }}</div>
+                        <div class="item-control" id="vote-control">
+                            {% if user %}
+                            <a href=/vote/up/{{ answer.key.urlsafe() }}><input type=button value='Up'></input></a>
+                            <a href=/vote/down/{{ answer.key.urlsafe() }}><input type=button value='Down'></input></a>
+                            {% endif %}
+                        </div> <!-- vote-control -->
+                        <div class="item-control" id="modify-control">
+                            {% if answer.author == user %}
+                            <a href=/answer/modify/{{ answer.key.urlsafe() }}><input type=button value='Modify'></input></a>
+                            {% endif %}
+                        </div> <!-- modify-control -->
+                    </div> <!-- item-control -->
+                </div> <!-- content-outer -->
+                <div style="clear: both;"></div>
+                {% endfor %}
+            {% endif %}
+            </div> <!-- end main-wrapper -->
+        </div> <!-- end hold -->
     </body>
 </html>
