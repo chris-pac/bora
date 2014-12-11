@@ -471,6 +471,30 @@ class PictureHandler(webapp2.RequestHandler):
             self.response.out.write(pic.imagedata)
         else:
             self.error(404)
+    
+    def uploadImage(self):
+        print "got the image"
+        
+        print self.request.get('content')
+        
+        user = users.get_current_user()
+        file_upload = self.request.POST.get('img', None)
+        try:
+            pic = Picture()
+            
+            pic.author = user
+            '''
+            pic.title = self.request.get('pic_title')
+            '''
+            
+            pic.imagedata = file_upload.file.read()
+            pic.filename = file_upload.filename    
+            pic.put()
+            self.response.write(self.request.host_url + '/image/' + pic.key.urlsafe() + '#image')
+            
+        except:
+            pass
+
             
         
 app = webapp2.WSGIApplication([
@@ -483,6 +507,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/answer/<action:(create|modify)>', handler=AnswerHandler, defaults={'entity_link': ''}),
     webapp2.Route(r'/rss/<question_link>', handler=QuestionView, handler_method='rssFeed'),
     webapp2.Route(r'/vote/<updown:(up|down)>/<entity_link>', handler=VoteHandler),
-    webapp2.Route('/image/<picture_link>', handler=PictureHandler, handler_method='serveImage')
+    webapp2.Route('/image/<picture_link>', handler=PictureHandler, handler_method='serveImage'),
+    webapp2.Route('/upload/image', handler=PictureHandler, handler_method='uploadImage',  methods=['POST'])
 ], debug=True)
 

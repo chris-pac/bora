@@ -3,6 +3,8 @@
     <head>
         <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <script src="/scripts/jquery-2.1.1.min.js"></script>-->
+        <!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>-->
     </head>
     <body>
         <div id="hold">
@@ -38,6 +40,128 @@
             </div> <!-- end main-wrapper -->
         </div> <!-- end hold -->
         
+        <form id="formFiles" action="{{ action }}" enctype="multipart/form-data" method=post>
+            <textarea id="contentInput" autofocus required name=content rows=20 cols=108>{{ content }}</textarea>
+            <input id="imageinput" type="file" name="img" accept="image/*">
+            <input type="button" id="picUpload" value="Upload">
+            <input type="button" id="picClear" value="Clear">
+        </form>
+        
+        
+        <script>
+            $('#picClear').click(function()
+            {
+                var input = $("#imageinput");
+                input.replaceWith(input.val('').clone(true));
+                
+                $("#contentInput").insertAtCursor(" world!");
+            });
+            
+            $('#picUpload').click(function()
+            {
+                alert("sending...");
+                
+                var input = document.getElementById("imageinput");
+                var file = input.files[0];
+                //var name = file.name;
+                
+                var len = input.files.length;
+                
+                alert(len);
+                alert(file.size);
+                if (file.size < 0) {
+                    alert("empty file");
+                    }
+                
+                alert("sending..." + name + input.getAttribute('name'));
+                
+                //var formdata = new FormData($('#formFiles')[0]);
+                var formdata = new FormData();
+                /*
+                formdata.append(input.getAttribute('name'), file);
+                $.ajax({
+                    url: '/upload/image',
+                    type: 'POST',
+                    data: formdata, //new FormData($('#formFiles')[0]),
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function(res){
+                        alert( "server response: " + res);
+                        }
+                    });
+                */
+            });
+// this function from: http://richonrails.com/articles/text-area-manipulation-with-jquery
+jQuery.fn.extend({
+	insertAtCursor: function(myValue) {
+		return this.each(function(i) {
+			if (document.selection) {
+				//For browsers like Internet Explorer
+				this.focus();
+				sel = document.selection.createRange();
+				sel.text = myValue;
+				this.focus();
+			}
+			else if (this.selectionStart || this.selectionStart == '0') {
+				//For browsers like Firefox and Webkit based
+				var startPos = this.selectionStart;
+				var endPos = this.selectionEnd;
+				var scrollTop = this.scrollTop;
+				this.value = this.value.substring(0, startPos) + myValue + 
+						    this.value.substring(endPos,this.value.length);
+				this.focus();
+				this.selectionStart = startPos + myValue.length;
+				this.selectionEnd = startPos + myValue.length;
+				this.scrollTop = scrollTop;
+			} else {
+				this.value += myValue;
+				this.focus();
+			}
+		})
+	}
+});
+        /*
+        $(function () {
+            $('#picUpload').click(function()
+            {
+                alert("sending...");
+                
+                //var formdata = new FormData($('#formFiles')[0]);
+                var formdata = new FormData();
+                formdata.append("img", 'ok');
+                $.ajax({
+                    url: '/upload/image',
+                    type: 'POST',
+                    data: new FormData($('#formFiles')[0]),
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function(res){
+                        alert( "server response: " + res);
+                        }
+                    });
+
+            });
+        });*/
+        /*
+        $('#picUpload').click(function() {
+             alert("this works?");
+             var formdata = new FormData($('form')[0]);
+             $.ajax({
+                    url: '/upload/image',
+                    type: 'POST',
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                    success: function(res){
+                    alert( "server response: " + res);
+                    }
+                    });
+             });
+         */
+        </script>
         
     </body>
 </html>
