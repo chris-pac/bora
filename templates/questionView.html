@@ -78,7 +78,7 @@
                 <div class="content-outer">
                     <div id="content-inner">
                         {% if user %}
-                            <form id="formFiles" style="margin: 5px 5px;" action=/answer/create method=post>
+                            <form id="formFiles" style="margin: 5px 5px;" enctype="multipart/form-data" action=/answer/create method=post>
                                 <textarea id="contentInput" required name=content rows=10 cols=108></textarea>
                                 <span>Enter Your Answer</span>
                                 <div style="float: right;margin-left: 30px;">

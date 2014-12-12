@@ -227,12 +227,13 @@ class MainHandler(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
 class QuestionView(webapp2.RequestHandler):
+    MAX_ANSWERS = 300
     def rssFeed(self, question_link):
         question_key = ndb.Key(urlsafe=question_link)
         
         question = question_key.get()
         answers_query = Answer.query(ancestor=question.key).order(-Answer.score)
-        answers = answers_query.fetch(300)
+        answers = answers_query.fetch(self.MAX_ANSWERS)
         
         template_values = {
             'question': question,
@@ -250,7 +251,7 @@ class QuestionView(webapp2.RequestHandler):
         
         question = question_key.get()
         answers_query = Answer.query(ancestor=question.key).order(-Answer.score)
-        answers = answers_query.fetch(300)
+        answers = answers_query.fetch(self.MAX_ANSWERS)
         
         if user:
             url = users.create_logout_url(self.request.uri)
@@ -314,77 +315,26 @@ class QuestionHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
             return
         
-        submitAction = self.request.get('submitButton')
+        pic_link = PictureHandler().uploadImageHelper(self)
+        if pic_link[0]:
+            pic_link = ' ' + pic_link[1]
+        else:
+            pic_link = ''
         
-        if submitAction == 'Upload':
-            pic_link = self.handlePictureUpload(user)
-            if pic_link:
-                self.reloadPageOnPictureUpload(action, entity_link, pic_link)
-            return
-                
         if action == 'create':
             question = Question()
             question.author = user
-            question.content = self.request.get('content')
+            question.content = self.request.get('content') + pic_link
             question.tags = [tag.strip() for tag in self.request.get('tags').split(',')]
             question.put()
         if action == 'modify':
             question = ndb.Key(urlsafe=entity_link).get()
             if question and question.author == user: 
-                question.content = self.request.get('content')
+                question.content = self.request.get('content') + pic_link
                 question.tags = [tag.strip() for tag in self.request.get('tags').split(',')]
                 question.put()
            
         self.redirect('/')
-        
-    def handlePictureUpload(self, user):
-        file_upload = self.request.POST.get('img', None)
-        '''
-        #FieldStorage
-        print "b"
-        print file_upload
-        
-        if file_upload == None:
-            print 'none'
-        print 'a'
-        return
-        '''
-        try:
-            pic = Picture()
-            pic.author = user
-            pic.title = self.request.get('pic_title')
-            pic.imagedata = file_upload.file.read()
-            pic.filename = file_upload.filename    
-            pic.put()
-            return pic.key.urlsafe()
-        except:
-            pass
-            
-    def reloadPageOnPictureUpload(self, action, entity_link, pic_link):
-        # this whole picture upload needs to be replaced with a postback (ajax or jquery)
-        
-        img_link = ' ' + self.request.host_url + '/image/' + pic_link + '#image'
-        
-        if action == 'create':
-            template_values = {
-                'action': '/question/create',
-                'action_name': 'Create',
-                'heading': 'What is your question?',
-                'content': self.request.get('content') + img_link,
-                'tags': self.request.get('tags')
-            }            
-        elif action == 'modify':
-            template_values = {
-                'action': '/question/modify/' + entity_link,
-                'action_name': 'Modify',
-                'heading': 'Make changes',
-                'content': self.request.get('content') + img_link,
-                'back_link': '/view/' + entity_link,
-                'tags': self.request.get('tags')
-            }
-        
-        template = JINJA_ENVIRONMENT.get_template('templates/questionInput.html')
-        self.response.write(template.render(template_values))            
         
 class AnswerHandler(webapp2.RequestHandler):
     def get(self, action, entity_link):
@@ -405,20 +355,30 @@ class AnswerHandler(webapp2.RequestHandler):
 
     def post(self, action, entity_link):
         user = users.get_current_user()
+
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+            return
+        
+        pic_link = PictureHandler().uploadImageHelper(self)
+        if pic_link[0]:
+            pic_link = ' ' + pic_link[1]
+        else:
+            pic_link = ''        
         
         if user:
             if action == 'create':
                 question_link = self.request.get('question')
                 answer = Answer(parent=ndb.Key(urlsafe=question_link))
                 answer.author = user
-                answer.content = self.request.get('content')
+                answer.content = self.request.get('content') + pic_link
                 answer.put()
                 self.redirect('/view/' + question_link)
             elif action == 'modify':
                 answer_key = ndb.Key(urlsafe=entity_link)
                 answer = answer_key.get()
                 if answer and answer.author == user: 
-                    answer.content = self.request.get('content')
+                    answer.content = self.request.get('content') + pic_link
                     answer.put()
                     self.redirect('/view/' + answer_key.parent().urlsafe())
         else:
@@ -472,30 +432,26 @@ class PictureHandler(webapp2.RequestHandler):
         else:
             self.error(404)
     
-    def uploadImage(self):
-        print "got the image"
-        
-        print self.request.get('content')
-        
+    def uploadImageHelper(self, obj):
         user = users.get_current_user()
-        file_upload = self.request.POST.get('img', None)
-        try:
-            pic = Picture()
-            
-            pic.author = user
-            '''
-            pic.title = self.request.get('pic_title')
-            '''
-            
-            pic.imagedata = file_upload.file.read()
-            pic.filename = file_upload.filename    
-            pic.put()
-            self.response.write(self.request.host_url + '/image/' + pic.key.urlsafe() + '#image')
-            
-        except:
-            pass
-
-            
+        file_upload = obj.request.POST.get('img', None)
+        
+        if user:            
+            try:
+                pic = Picture()                
+                pic.author = user
+                pic.imagedata = file_upload.file.read()
+                pic.filename = file_upload.filename    
+                pic.put()
+                return (True,obj.request.host_url + '/image/' + pic.key.urlsafe() + '#image')             
+            except:
+                return (False,'Error while uploading the file')
+        else:
+            return (False, 'Invalid user')
+    
+    def uploadImage(self):
+        self.response.write(self.uploadImageHelper(self)[1])
+                    
         
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/tag/<tag>', handler=MainHandler),
