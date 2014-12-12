@@ -3,6 +3,7 @@
     <head>
         <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <script src="/scripts/jquery-2.1.1.min.js"></script>
     </head>
     <body>
         <div id="hold">
@@ -22,14 +23,20 @@
                     <div id="content-inner">
         
         
-                        <form action="{{ action }}" enctype="multipart/form-data" method=post>
+                        <form id="formFiles" action="{{ action }}" enctype="multipart/form-data" method=post>
                             <p>{{ heading }}</p>
-                            <textarea autofocus required name=content rows=20 cols=108>{{ content }}</textarea>
+                            <textarea id="contentInput" autofocus required name=content rows=20 cols=108>{{ content }}</textarea>
                             {% block tags %}{% endblock %}
-                            {% block picture %}{% endblock %}
-                            <br />
-                            <input type="submit" name="submitButton" value="{{ action_name }}">
-                            <a href={{ back_link|default("/") }}><input type=button value='Back'</input></a>
+                            <div style="float: left;">
+                                <input id="imageinput" type="file" name="img" accept="image/*">
+                                <input type="button" id="picUpload" value="Insert Picture">
+                                <input type="button" id="picClear" value="Clear Picture">
+                            </div>
+                            <div style="float: right";>
+                                <input type="submit" name="submitButton" value="{{ action_name }}">
+                                <a href={{ back_link|default("/") }}><input type=button value='Back'</input></a>
+                            </div>
+                            <div style="clear: both;"></div>
                         </form>
         
                     </div> <!-- content-inner -->
@@ -37,7 +44,6 @@
                 <div style="clear: both;"></div>
             </div> <!-- end main-wrapper -->
         </div> <!-- end hold -->
-        
-        
+        <script src="/scripts/bora.picture.js"></script>
     </body>
 </html>
