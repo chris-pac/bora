@@ -17,6 +17,13 @@ indexes:
     direction: desc
 
 - kind: Question
+  ancestor: yes
+  properties:
+  - name: modifydate
+    direction: desc
+
+- kind: Question
+  ancestor: yes
   properties:
   - name: tags
   - name: modifydate

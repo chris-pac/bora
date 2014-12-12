@@ -9,10 +9,8 @@ import webapp2
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.datastore.datastore_query import Cursor
-#import cgi
 import os
 import sys
-#import urllib
 import re
 from itertools import imap
 from jinja2 import Markup, escape
@@ -154,7 +152,6 @@ class Question(ndb.Model):
     createdate = ndb.DateTimeProperty(auto_now_add=True)
     modifydate = ndb.DateTimeProperty(auto_now=True)
     tags = ndb.StringProperty(repeated=True)
-    shortcontent = ndb.ComputedProperty(lambda self: self.content[:500])
     votes = ndb.StructuredProperty(Vote, repeated=True)
     score = ndb.IntegerProperty(default=0)
 
@@ -174,6 +171,35 @@ class Picture(ndb.Model):
     filename = ndb.StringProperty(required=True)
 # [END models]
 
+
+def handleErrors(obj, err):
+    obj.abort(err)    
+
+
+def getEntity(obj, entity_link, entity_name=''):
+    try:
+        myentity_key = ndb.Key(urlsafe=entity_link)
+    except:
+        handleErrors(obj, 404)
+        return (False, '')        
+    
+    if not myentity_key:
+        handleErrors(obj, 404)
+        return (False, '')
+            
+    myentity = myentity_key.get()
+    if not myentity:
+        handleErrors(obj, 404)
+        return (False, '')
+    
+    return (True, myentity)
+
+
+# the default question key is used as a parent for all questions so that expected consistency can be achieved
+# if this is not done updated questions may not immediately show up on main page
+def question_key():
+    return ndb.Key('Question', 'all_questions')
+
 class MainHandler(webapp2.RequestHandler):
     MAX_QUESTIONS_PER_PAGE = 5
     def post(self, tag):
@@ -185,7 +211,7 @@ class MainHandler(webapp2.RequestHandler):
         user = users.get_current_user()
         curs = Cursor(urlsafe=self.request.get('next'))
         
-        questions_query = Question.query().order(-Question.modifydate)
+        questions_query = Question.query(ancestor=question_key()).order(-Question.modifydate)
         
         if tag:
             questions_query = questions_query.filter(Question.tags == tag)
@@ -247,9 +273,12 @@ class QuestionView(webapp2.RequestHandler):
         
     def get(self, question_link):
         user = users.get_current_user()
-        question_key = ndb.Key(urlsafe=question_link)
         
-        question = question_key.get()
+        ret = getEntity(self, question_link)
+        if not ret[0]:
+            return
+        
+        question = ret[1]
         answers_query = Answer.query(ancestor=question.key).order(-Answer.score)
         answers = answers_query.fetch(self.MAX_ANSWERS)
         
@@ -294,16 +323,17 @@ class QuestionHandler(webapp2.RequestHandler):
 
     def showModify(self, entity_link):
         user = users.get_current_user()
-        myentity = ndb.Key(urlsafe=entity_link).get()        
 
-        if user and myentity and myentity.author == user:
+        ret = getEntity(self, entity_link)
+        
+        if ret[0] and user and ret[1].author == user:
             template_values = {
                 'action': '/question/modify/' + entity_link,
                 'action_name': 'Modify',
                 'heading': 'Make changes',
-                'content': myentity.content,
+                'content': ret[1].content,
                 'back_link': '/view/' + entity_link,
-                'tags': ', '.join(myentity.tags)
+                'tags': ', '.join(ret[1].tags)
             }
             template = JINJA_ENVIRONMENT.get_template('templates/questionInput.html')
             self.response.write(template.render(template_values))
@@ -322,25 +352,30 @@ class QuestionHandler(webapp2.RequestHandler):
             pic_link = ''
         
         if action == 'create':
-            question = Question()
+            question = Question(parent=question_key())
             question.author = user
             question.content = self.request.get('content') + pic_link
             question.tags = [tag.strip() for tag in self.request.get('tags').split(',')]
             question.put()
+            self.redirect('/')
         if action == 'modify':
-            question = ndb.Key(urlsafe=entity_link).get()
-            if question and question.author == user: 
+            ret = getEntity(self, entity_link)
+            if ret[0] and ret[1].author == user:
+                question = ret[1]
                 question.content = self.request.get('content') + pic_link
                 question.tags = [tag.strip() for tag in self.request.get('tags').split(',')]
                 question.put()
-           
-        self.redirect('/')
+                self.redirect('/')        
         
 class AnswerHandler(webapp2.RequestHandler):
     def get(self, action, entity_link):
         user = users.get_current_user()
-        myentity_key = ndb.Key(urlsafe=entity_link)
-        myentity = myentity_key.get()       
+                
+        ret = getEntity(self, entity_link, 'Answer')
+        if not ret[0]:
+            return
+        
+        myentity = ret[1]       
 
         if user and myentity and myentity.author == user:
             template_values = {
@@ -348,7 +383,7 @@ class AnswerHandler(webapp2.RequestHandler):
                 'action_name': 'Modify',
                 'heading': 'Make changes',
                 'content': myentity.content,
-                'back_link': '/view/' + myentity_key.parent().urlsafe()
+                'back_link': '/view/' + myentity.key.parent().urlsafe()
             }
             template = JINJA_ENVIRONMENT.get_template('templates/baseInput.html')
             self.response.write(template.render(template_values))
@@ -375,12 +410,12 @@ class AnswerHandler(webapp2.RequestHandler):
                 answer.put()
                 self.redirect('/view/' + question_link)
             elif action == 'modify':
-                answer_key = ndb.Key(urlsafe=entity_link)
-                answer = answer_key.get()
-                if answer and answer.author == user: 
+                ret = getEntity(self, entity_link, 'Answer')
+                if ret[0] and ret[1].author == user:
+                    answer = ret[1] 
                     answer.content = self.request.get('content') + pic_link
                     answer.put()
-                    self.redirect('/view/' + answer_key.parent().urlsafe())
+                    self.redirect('/view/' + answer.key.parent().urlsafe())
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
@@ -396,9 +431,9 @@ class VoteHandler(webapp2.RequestHandler):
         user = users.get_current_user()
         
         if user:
-            myentity_key = ndb.Key(urlsafe=entity_link)
-            myentity = myentity_key.get()
-            if myentity:
+            ret = getEntity(self, entity_link)
+            if ret[0]:
+                myentity = ret[1]
                 founduser = False   
                 for vote in myentity.votes:
                     if vote.author == user:
@@ -418,19 +453,17 @@ class VoteHandler(webapp2.RequestHandler):
             
 class PictureHandler(webapp2.RequestHandler):
     def serveImage(self, picture_link):
-        pic_key = ndb.Key(urlsafe=picture_link)
-
-        if not pic_key:
-            self.error(404)
+        ret = getEntity(self, picture_link, 'Picture')
+        if not ret[0]:
             return
         
-        pic = pic_key.get()
+        pic = ret[1]
         
         if pic and pic.imagedata:
             self.response.headers['Content-Type'] = mimetypes.guess_type(pic.filename)[0]
             self.response.out.write(pic.imagedata)
         else:
-            self.error(404)
+            self.abort(404)
     
     def uploadImageHelper(self, obj):
         user = users.get_current_user()
@@ -451,6 +484,11 @@ class PictureHandler(webapp2.RequestHandler):
     
     def uploadImage(self):
         self.response.write(self.uploadImageHelper(self)[1])
+
+def handle_404(request, response, exception):
+    template = JINJA_ENVIRONMENT.get_template('templates/404.html')
+    response.write(template.render())
+    response.set_status(404)
                     
         
 app = webapp2.WSGIApplication([
@@ -467,3 +505,4 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/upload/image', handler=PictureHandler, handler_method='uploadImage',  methods=['POST'])
 ], debug=True)
 
+app.error_handlers[404] = handle_404
