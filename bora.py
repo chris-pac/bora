@@ -201,7 +201,7 @@ def question_key():
     return ndb.Key('Question', 'all_questions')
 
 class MainHandler(webapp2.RequestHandler):
-    MAX_QUESTIONS_PER_PAGE = 5
+    MAX_QUESTIONS_PER_PAGE = 10
     def post(self, tag):
         self.handlePostGet('post')
     def get(self, tag):

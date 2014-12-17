@@ -9,7 +9,7 @@
                 <h1>Bora</h1>
                 <h3>Hello {{ user_nickname }}</h3>
                 <div id="nav">
-                    <ul>
+                    <ul id="navi">
                         <li>
                             <a href=/>Home</a>
                         </li>
@@ -47,13 +47,13 @@
                             <span class="question-tags">
                                 <a href="/rss/{{ question.key.urlsafe() }}" class="feed"></a> Tagged With:
                                 {% for tag in question.tags %}
-                                <a href="/tag/{{ tag }}">{{ tag }}</a>
+                                <a class="link-enh" href="/tag/{{ tag }}">{{ tag }}</a>
                                 {% endfor %}
                             </span>
                         </div>
                     </div> <!-- content-inner -->
                     <div class="jump-link">
-                        <a href="/view/{{ question.key.urlsafe() }}">Read more »</a>
+                        <a class="link-enh" href="/view/{{ question.key.urlsafe() }}">Read more »</a>
                     </div>
                 </div> <!-- content-outer -->
                 <div style="clear: both;"></div>
