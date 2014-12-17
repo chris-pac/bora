@@ -508,7 +508,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/view/<question_link>', handler=QuestionView),
     webapp2.Route(r'/answer/<action:(create|modify)>/<entity_link>', handler=AnswerHandler),
     webapp2.Route(r'/answer/<action:(create|modify)>', handler=AnswerHandler, defaults={'entity_link': ''}),
-    webapp2.Route(r'/rss/<question_link>', handler=QuestionView, handler_method='rssFeed'),
+    #webapp2.Route(r'/rss/<question_link>', handler=QuestionView, handler_method='rssFeed'),
     webapp2.Route(r'/vote/<updown:(up|down)>/<entity_link>', handler=VoteHandler),
     webapp2.Route('/image/<picture_link>', handler=PictureHandler, handler_method='serveImage'),
     webapp2.Route('/upload/image', handler=PictureHandler, handler_method='uploadImage',  methods=['POST'])

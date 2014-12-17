@@ -50,7 +50,7 @@
                                 <div style="clear: both;"></div>
                             </div> <!-- end time -->
                             <span class="question-tags">
-                                <a href="/rss/{{ question.key.urlsafe() }}" class="feed"></a> Tagged With:
+                                <!--<a href="/rss/{{ question.key.urlsafe() }}" class="feed"></a>--> Tagged With:
                                 {% for tag in question.tags %}
                                 <a class="link-enh" href="/tag/{{ tag }}">{{ tag }}</a>
                                 {% endfor %}
