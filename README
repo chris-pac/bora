@@ -1,0 +1,100 @@
+Developers Guide
+
+The project is implemented on top of Google’s app engine, running webapp2 framework, and  uses Google’s datastore for all persistent data. Jinja2 templating system is used to render the actual html.
+
+The directory structure of the project is as follows:
+	home
+	images
+	scripts
+	stylesheets
+	templates
+
+The home directory contains the the main python source code file called bora.py, the project description and dependencies file called app.yaml, pre-defined query indexes are in the index.yaml, and the icon file. 
+
+The images directory contains all the static image files used to style the website. 
+
+The scripts directory contains JQuery scripts. The file of interest here is the bora.picture.js which  is a script that uses Ajax for uploading pictures asynchronously.
+
+The stylesheets directory contains the cascading style sheets file. 
+
+The templates directory contains jinja2 template files.
+
+The main python file, bora.py, can be divided from top to bottom as follows:
+module imports
+jinja environment initialization and jinja custom filter functions
+	NDB datastore models
+		Vote model
+		Question model
+		Answer model
+		Picture model
+	helper functions for error handling and datastore entity lookup
+	webapp2 Post and Get request handler classes
+		Main page handler
+		Question View page handler
+		Question handler
+		Answer handler
+		Vote handler
+		Picture handler
+	Route definitions used by Web Server Gateway Interface application instance
+	404 error handler
+
+Jinja2
+
+Two filter functions are implemented to be used in generating html from templates, ‘urlize_ext’ and ‘datetime'. The ‘urlize_ext’ function searches a question or an answer content for html links and inserts appropriate html tags depending if its a regular or picture link. Pictures stored by the application are suffixed with ‘#image’. The ‘datetime’ function formats the datetime to a specified format.
+
+NDB Datastore models
+
+The application uses the new Google NDB datastore api in order to persist all data. Four data objects/models are defined but only three are individually persisted. The Vote model is not persisted by itself and instead is used to define a structured property, called ‘votes’, in the Question and Answer model.
+
+The Vote model contains the ‘author’ (user) who casted the vote and the ‘updown' property which is +1 for an up vote and -1 for a down vote.
+
+Question and Answer models contain a subset of the same property names but are intentionally not derived from a common subclass. They are logically separate entities and therefore should not share a subclass. Special options are set for the ‘createdate'  and ‘modifydate’  properties. The ‘createdate' property holds the create datetime value and is initialized with an option that directs the datastore to set the datetime value automatically upon creation of the object. The ‘modifydate’ is declared with an option to direct the datastore to update it every time the object is modified. The ‘tags’ property is basically a list of string values. The ‘votes’ property is a list of Vote object models. The author is the user who created the question or answer and the text of the question or answer is stored in the ‘content’ property.
+
+The Picture model has a blob property, called ‘imagedata’, that holds the binary image data. The Picture model also stores the user who uploaded the picture, the time of the upload, the original filename of the image, and the optional title of the image.
+
+All the questions are stored under the same parent key in order to achieve the expected consistency behavior. The answer entities use the key of the question to which they belong as their parent key. The datastore works under eventual consistency model and enforces causal consistent by having the user specify parent keys when storing entities.
+
+
+Helper Functions
+
+The error handler function simply calls abort on the application with the specified error code. This will trigger any registered error handlers to be executed.
+
+The ‘getEntity’ is a helper function that’s used to retrieve an entity from the datastore and check for errors.
+
+
+Request Handlers
+
+All the handlers follow similar pattern, they save or load data from the datastore, occasionally apply some operations on the data if required, and then pass those data values to the template engine for rendering.
+
+Main page handler
+
+The MainHandler class handles requests for the home page ‘/‘ and the ‘/tag/<specified tag>’ route. The specified tag is extracted from the path using regular expression and passed to the handler as an argument. The MainHandler class then creates a query for all questions ordered by descending value of the modify datetime property. Then the query is filtered by a specified tag (if present) and executed to retrieve maximum of ten questions and a cursor pointer to the next set of questions if any. The currently logged in user is obtained and the appropriate values are set based on whether it’s a ‘Guest’ (no user) or a logged in user. Template arguments are set and passed to a specific jinja template for rendering.
+
+The QuestionView handler class handles requests to the ‘/view/<question_link>’ and the ‘/rss/<question_link>’. The ‘question_link’ is extracted from the route and passed as an argument. This link is the datastore key of the question encoded as url safe string. For both the RSS and the html view the question is retrieved from the datastore based on this key and then all answers for that question are retrieved. These values are then passed to the template.
+
+The QuestionHandler handles requests for the creation and modification of individual questions. The route for this handler is ‘/question/<action:(create|modify)>/<entity_link>’, where action is either ‘create’ or ‘modify’ and entity link is the question key encoded as url safe string. The ‘get’ method returns html question input page with populated values if the action is modify or an empty page if the action is a create, both generated through a template. The ‘post’ method receives a form data for a new or modified question and updates the datastore. If the user is not logged in the operation is aborted by redirecting the user to a login page, furthermore the author of the question is verified to be the same as the current logged in user. Also, the Picture handler is invoked to save any images contained in the form.
+
+The AnswerHandler class handles the following routes: ‘/answer/<action:(create|modify)>/<entity_link>’. This handler works the same way as the Question handler with the exception that it does not need to return an html page for the creation of answers since that form is loaded in the question view page.
+
+The VoteHandler checks if the user has casted a vote for the specified question or answer and updates the score value. If the user has never casted a vote for that particular item, then his or her vote is saved in that item and the score is updated.
+
+The PictureHandler handles the following routes ‘/image/<picture_link>’ and ‘/upload/image’. The handler either saves the image in the datastore or serves the image from the datastore.
+
+Errors
+
+The application only handles the 404 error and but others can be easily added. When invalid link or url key is passed to the application the 404 error handler is invoked through an abort call.
+
+Jinja Templates
+
+There are six template files that correspond to the html page views and handlers that use them. In this project Jinja2 templating system is used to generate the appropriate html pages. Few things of note here are: the use of template inheritance and macros. The question view template inherits from base input template and the question view template uses macros to set appropriate vote element id. Finally, formatting and text manipulation is done through the use of jinja's or custom filters in the templates themselves and not in the python main application. This keeps the view separate from the control code. Once the number of custom filters grows substantially then a new separate python module should be created for them.
+
+Scripts
+
+The scripts folder contains JQuery 2.1 compressed script and a picture handling script called bora.picture.js. The main purpose of the bora script is to do an asynchronous postback of the image data through Ajax and to insert the image url link into the text field on the question or answer form.
+
+
+Testing
+
+All testing was done in Google Chrome version 39. The application should work under any browser that fully supports HTML5. (Some older browsers like IE 9 are not HTML5 compliant.)
+
+The RSS feed was validated through http://www.rssboard.org/rss-validator.
