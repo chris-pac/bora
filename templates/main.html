@@ -64,6 +64,7 @@
                 <form action=/ method=POST>
                     <input type=submit value="Next Page"></input>
                     <input type=hidden name=next value={{ more_url }}></input>
+                    <input type=hidden name=filtertag value={{ more_tag }}></input>
                 </form>
                 {% elif more_home %}
                 <a href={{ more_url }}><input type=button value="Home"></input></a>

@@ -130,9 +130,10 @@ p.content {
     float: right;
 }
 
-img {
+p img {
     /*width: 100%;*/
     /*overflow: auto;*/
+    /*float: right;*/
 }
 
 

@@ -171,7 +171,7 @@ class Picture(ndb.Model):
     filename = ndb.StringProperty(required=True)
 # [END models]
 
-
+# [START error and helper func]
 def handleErrors(obj, err):
     obj.abort(err)    
 
@@ -193,8 +193,10 @@ def getEntity(obj, entity_link, entity_name=''):
         return (False, '')
     
     return (True, myentity)
+# [END error and helper func]
 
 
+# [START request handlers]
 # the default question key is used as a parent for all questions so that expected consistency can be achieved
 # if this is not done updated questions may not immediately show up on main page
 def question_key():
@@ -212,6 +214,10 @@ class MainHandler(webapp2.RequestHandler):
         curs = Cursor(urlsafe=self.request.get('next'))
         
         questions_query = Question.query(ancestor=question_key()).order(-Question.modifydate)
+        
+        # load the tag from the input cursor form if none provided
+        if not tag:
+            tag = self.request.get('filtertag')
         
         if tag:
             questions_query = questions_query.filter(Question.tags == tag)
@@ -246,7 +252,8 @@ class MainHandler(webapp2.RequestHandler):
             'user_url_linktext': url_linktext,
             'more': more,
             'more_home': more_home,
-            'more_url': more_url
+            'more_url': more_url,
+            'more_tag': tag
         }
 
         template = JINJA_ENVIRONMENT.get_template('templates/main.html')
@@ -484,12 +491,14 @@ class PictureHandler(webapp2.RequestHandler):
     
     def uploadImage(self):
         self.response.write(self.uploadImageHelper(self)[1])
+# [END request handlers]
 
+# [START error handlers]
 def handle_404(request, response, exception):
     template = JINJA_ENVIRONMENT.get_template('templates/404.html')
     response.write(template.render())
     response.set_status(404)
-                    
+# [END error handlers]                    
         
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/tag/<tag>', handler=MainHandler),

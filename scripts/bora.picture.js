@@ -24,7 +24,7 @@ $('#picUpload').click(function()
                 contentType: false,
                 processData: false,
                 success: function(res){
-                    $("#contentInput").insertAtCursor(res + ' ');
+                    $("#contentInput").insertAtCursor(' ' + res + ' ');
                     var fileinput = $("#imageinput");
                     fileinput.replaceWith(fileinput.val('').clone(true));
                     }
